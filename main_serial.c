@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
       printf("Error initializing d matrix.\n");
       return rc;
     }
-    rc = generate_graph(&d, 0.5, 10);
+    rc = generate_graph(&d, 0.5, MAX_EDGE_LENGTH);
     if (rc != CODE_SUCCESS) {
       printf("Error generating graph!\n");
       return rc;

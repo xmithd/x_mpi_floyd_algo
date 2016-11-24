@@ -14,6 +14,7 @@
 #define CODE_ERROR   1
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#define MAX_EDGE_LENGTH 10
 
 /**
  * array list data structure
