@@ -67,13 +67,13 @@ int main(int argc, char *argv[]) {
       printf("Input file could not be read...\n");
       return rc;
     }
-    if (graph.rows < numprocs) {
+    if (graph.list.size < numprocs) {
       matrix2d_free(&graph);
       printf("There are too many processors (%d) for just %zu elements.\n", numprocs, graph.rows);
       return CODE_ERROR;
     }
 
-    if (graph.rows % numprocs != 0) {
+    if (graph.list.size % numprocs != 0) {
       matrix2d_free(&graph);
       printf("Each processor must have an equal number of elements to process.\n");
       return CODE_ERROR;
@@ -148,18 +148,26 @@ int main(int argc, char *argv[]) {
   // TODO put some kind of barrier here?
 
   if (info.id == 0) {
+    end = MPI_Wtime();
     // prepare to receive data from processes.
     array_list_init(&gathered_list, info.nodes * info.nodes, sizeof(int));
-    end = MPI_Wtime();
   }
   // extract each processe's part and gather data
   extracted = extract_local_matrix(&graph, &info);
+#ifdef PRINT_DEBUG
+  {
+    char buffer[4096];
+    sprintf(buffer, "Process %d's final matrix:\n", info.id);
+    matrix2d_print_int(&extracted, buffer);
+    printf("%s", buffer);
+  }
+#endif
   rc = MPI_Gather(
       extracted.list.data,
       extracted.list.size,
       MPI_INT,
       gathered_list.data,
-      gathered_list.capacity,
+      extracted.list.size,
       MPI_INT,
       0,
       MPI_COMM_WORLD

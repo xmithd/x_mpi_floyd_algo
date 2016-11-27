@@ -121,12 +121,19 @@ int compute_local_floyd(matrix2d *graph, proc_info const *info, int k)
   int rc = CODE_SUCCESS;
   int elements = info->nodes / info->sqrt_p;
   int tr_i = map_local_row_to_global(0, info->sqrt_p, info->id, info->nodes);
-  // TODO verify this
-  // skip the part about having a fresh copy
+  matrix2d prev = extract_local_matrix(graph, info);
+#ifdef PRINT_DEBUG
+{
+  char buf[4096];
+  sprintf(buf, "Computing Floyd for round %d with process %d\n", k, info->id);
+  matrix2d_print_int(&prev, buf);
+  printf("%s", buf);
+}
+#endif
   for (i = 0; i < elements; ++i) {
     int tr_j = map_local_column_to_global(0, info->sqrt_p, info->id, info->nodes);
     for (j = 0; j < elements; ++j) {
-      int current_shortest_path = *(int *)matrix2d_get_at(graph, tr_i, tr_j);
+      int current_shortest_path = *(int *)matrix2d_get_at(&prev, i, j);
       int newly_computed_path, newVal;
       int p_i_k = *(int *)matrix2d_get_at(graph, tr_i, k);
       int p_k_j = *(int *)matrix2d_get_at(graph, k, tr_j);
@@ -145,6 +152,7 @@ int compute_local_floyd(matrix2d *graph, proc_info const *info, int k)
     }
     ++tr_i;
   }
+  matrix2d_free(&prev);
   return rc;
 }
 
@@ -159,9 +167,10 @@ matrix2d extract_local_matrix(matrix2d const *graph, proc_info const *info)
   int tr_i = map_local_row_to_global(0, info->sqrt_p, info->id, info->nodes);
   matrix2d local;
 #ifdef PRINT_DEBUG
-
+/*
   int tr_jj = map_local_column_to_global(0, info->sqrt_p, info->id, info->nodes);
   printf("Extracting data... process: %d\n\tElements: %d tr_i: %d, tr_j: %d\n", info->id, num_elements, tr_i, tr_jj);
+*/
 #endif
   matrix2d_init(&local, num_elements, num_elements, sizeof(int));
   for (i=0; i < num_elements; ++i)
@@ -332,7 +341,7 @@ int broadcast_row(matrix2d *graph, int row, proc_info const *info, MPI_Comm comm
       data.size = data.capacity;
     }
     // root of the broadcast is the processor's column id that is sending this row
-    rc = MPI_Bcast(data.data, data.size, MPI_INT, info->p_column, communicator);
+    rc = MPI_Bcast(data.data, data.size, MPI_INT, p_senders_row, communicator);
     if (rc != MPI_SUCCESS) {
       printf("Warning! MPI row %d Broadcast failed.\n", row);
     }
@@ -376,7 +385,7 @@ int broadcast_column(matrix2d *graph, int column, proc_info const *info, MPI_Com
       // set the size now
       data.size = data.capacity;
     }
-    rc = MPI_Bcast(data.data, data.size, MPI_INT, info->p_row, communicator);
+    rc = MPI_Bcast(data.data, data.size, MPI_INT, p_senders_column, communicator);
     if (rc != MPI_SUCCESS) {
       printf("Warning! MPI column %d Broadcast failed.\n", column);
     }
