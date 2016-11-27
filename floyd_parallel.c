@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "mpi.h"
 #include <limits.h>
+#include <stdio.h>
 
 /**
  * Main parallel Floyd algorithm with the broadcast
@@ -127,7 +128,7 @@ int compute_local_floyd(matrix2d *graph, proc_info const *info, int k)
   char buf[4096];
   sprintf(buf, "Computing Floyd for round %d with process %d\n", k, info->id);
   matrix2d_print_int(&prev, buf);
-  printf("%s", buf);
+  //printf("%s", buf);
 }
 #endif
   for (i = 0; i < elements; ++i) {
@@ -146,6 +147,7 @@ int compute_local_floyd(matrix2d *graph, proc_info const *info, int k)
       newVal = MIN(current_shortest_path, newly_computed_path);
       rc = matrix2d_set_at(graph, tr_i, tr_j, (char const *)(&newVal));
       if (rc != CODE_SUCCESS) {
+        matrix2d_free(&prev);
         return rc;
       }
       ++tr_j;
@@ -329,9 +331,9 @@ int broadcast_row(matrix2d *graph, int row, proc_info const *info, MPI_Comm comm
 #ifdef PRINT_DEBUG
       {
         char buffer[4096] = {0};
-        printf("Row %d; Process: %d. Build row data to send:\n", row, info->id);
+        //printf("Row %d; Process: %d. Build row data to send:\n", row, info->id);
         array_list_print_int(&data, buffer);
-        printf("%s\n", buffer);
+        //printf("%s\n", buffer);
       }
 #endif
     } else {
@@ -375,9 +377,9 @@ int broadcast_column(matrix2d *graph, int column, proc_info const *info, MPI_Com
 #ifdef PRINT_DEBUG
       {
         char buffer[4096] = {0};
-        printf("Column %d; Process: %d. Build column data to send:\n", column, info->id);
+        //printf("Column %d; Process: %d. Build column data to send:\n", column, info->id);
         array_list_print_int(&data, buffer);
-        printf("%s\n", buffer);
+        //printf("%s\n", buffer);
       }
 #endif
     } else {
@@ -389,7 +391,7 @@ int broadcast_column(matrix2d *graph, int column, proc_info const *info, MPI_Com
     if (rc != MPI_SUCCESS) {
       printf("Warning! MPI column %d Broadcast failed.\n", column);
     }
-    if (column % info->sqrt_p != info->p_column) {
+    if (p_senders_column != info->p_column) {
       rc = insert_column_in_graph(&data, process_id, column, info, graph);
       if (rc != CODE_SUCCESS) {
         printf("T___T\n");

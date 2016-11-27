@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
   info.p_column = get_p_column(info.id, info.sqrt_p);
 
 #ifdef PRINT_DEBUG
-    printf("Pid: %d Info:\n\tnodes: %d\n\tsqrt_p: %d\n\tp_row: %d\n\tp_column: %d\n", info.id, info.nodes, info.sqrt_p, info.p_row, info.p_column);
+    //printf("Pid: %d Info:\n\tnodes: %d\n\tsqrt_p: %d\n\tp_row: %d\n\tp_column: %d\n", info.id, info.nodes, info.sqrt_p, info.p_row, info.p_column);
 #endif
 
   if (info.id != 0) {
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
     char buff[4096] = {0};
     printf("Broadcasting the data of size %zu\n", graph.list.size);
     array_list_print_int(&(graph.list), buff);
-    printf("%s\n", buff);
+    //printf("%s\n", buff);
   }
 #endif
   rc = MPI_Bcast(graph.list.data, graph.list.size, MPI_INT, 0, MPI_COMM_WORLD);
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
     char buffer[4096] = {0};
     extracted = extract_local_matrix(&graph, &info);
     matrix2d_print_int(&extracted, buffer);
-    printf("Local matrix to process %d:\n%s", info.id, buffer);
+    //printf("Local matrix to process %d:\n%s", info.id, buffer);
   }
 #endif
   
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
     char buffer[4096];
     sprintf(buffer, "Process %d's final matrix:\n", info.id);
     matrix2d_print_int(&extracted, buffer);
-    printf("%s", buffer);
+    //printf("%s", buffer);
   }
 #endif
   rc = MPI_Gather(
