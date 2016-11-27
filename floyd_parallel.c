@@ -36,11 +36,13 @@ int floyd_parallel_bcast(matrix2d *graph, proc_info *info)
       compute floyd algo for my part.
   */
   for (k=0; k < info->nodes; ++k) {
-    rc = broadcast_rows(graph, k, info, ROW_COMM);
+    // broadcast the kth row to all processes in the column
+    rc = broadcast_row(graph, k, info, COL_COMM);
     if (rc != CODE_SUCCESS) {
       printf("Something went wrong broadcasting rows for k = %d.\n", k);
     }
-    rc = broadcast_column(graph, k, info, COL_COMM);
+    // broadcast the kth column to all the processes in the row
+    rc = broadcast_column(graph, k, info, ROW_COMM);
     if (rc != CODE_SUCCESS) {
       printf("Something went wrong broadcasting columns for k = %d.\n", k);
     }
@@ -221,7 +223,7 @@ array_list build_row_elements_to_send(proc_info const *info, int row, matrix2d *
     element = (int *)matrix2d_get_at(graph, row, tr_j);
     rc = array_list_insert(&list, (char const *)element);
     if (rc != CODE_SUCCESS) {
-      printf("Warning: something went wrong inserting elements in list\n");
+      printf("Warning: something went wrong inserting row elements in list\n");
     }
   }
 
@@ -245,7 +247,7 @@ array_list build_column_elements_to_send(proc_info const *info, int column, matr
     element = (int *)matrix2d_get_at(graph, tr_i, column);
     rc = array_list_insert(&list, (char const *)element);
     if (rc != CODE_SUCCESS) {
-      printf("Warning: something went wrong inserting elements in list\n");
+      printf("Warning: something went wrong inserting column elements in list\n");
     }
   }
 
@@ -300,44 +302,50 @@ int insert_column_in_graph(array_list const *items, int senders_pid, int column,
 
 /**
  * Broadcasts the elements of the given row from the current processor
- * and receives the data from other processors to populate the complete row
+ * and receives the data from other processors to populate the complete columns
  * of this process
  */ 
-int broadcast_rows(matrix2d *graph, int row, proc_info const *info, MPI_Comm communicator)
+int broadcast_row(matrix2d *graph, int row, proc_info const *info, MPI_Comm communicator)
 {
   int k, rc;
-  for (k=0; k < info->sqrt_p; ++k) {
+  int p_senders_row = row / (info->nodes / info->sqrt_p);
+  for (k=0; k < info->sqrt_p; ++k) { // iterate through the processes of the row
     array_list data;
-    // get the process id for this row of processes.
-    int process_id = map_process_coord_to_pid(row, k, info->sqrt_p);
-    if (k == info->p_row) {
+    // get the sender's process id for this row of processes.
+    int process_id = map_process_coord_to_pid(p_senders_row, k, info->sqrt_p);
+    // check if row belongs to this process.
+    // build data to send
+    if (p_senders_row == info->p_row) {
       data = build_row_elements_to_send(info, row, graph);
 #ifdef PRINT_DEBUG
       {
         char buffer[4096] = {0};
-        printf("Process: %d. Build row data to send:\n", info->id);
+        printf("Row %d; Process: %d. Build row data to send:\n", row, info->id);
         array_list_print_int(&data, buffer);
         printf("%s\n", buffer);
       }
 #endif
     } else {
+      // prepare a buffer to receive data
       array_list_init(&data, info->nodes / info->sqrt_p, sizeof(int));
       // set the size now
       data.size = data.capacity;
     }
-    rc = MPI_Bcast(data.data, data.size, MPI_INT, k, communicator);
+    // root of the broadcast is the processor's column id that is sending this row
+    rc = MPI_Bcast(data.data, data.size, MPI_INT, info->p_column, communicator);
     if (rc != MPI_SUCCESS) {
       printf("Warning! MPI row %d Broadcast failed.\n", row);
     }
-    if (k != info->p_row) {
-      rc = insert_row_in_graph(&data, process_id, row, info, graph);
+    if (p_senders_row != info->p_row) {
+      // update local matrix with values received
+      rc = insert_row_in_graph(&data, process_id , row, info, graph);
       if (rc != CODE_SUCCESS) {
         printf("T___T\n");
       }
     }
     array_list_free(&data);
   }
-  return CODE_SUCCESS;
+  return rc;
 }
 
 /**
@@ -348,16 +356,17 @@ int broadcast_rows(matrix2d *graph, int row, proc_info const *info, MPI_Comm com
 int broadcast_column(matrix2d *graph, int column, proc_info const *info, MPI_Comm communicator)
 {
   int k, rc;
-  for (k=0; k < info->sqrt_p; ++k) {
+  int p_senders_column = column / (info->nodes / info->sqrt_p);
+  for (k=0; k < info->sqrt_p; ++k) { // iterate through the processes in this column
     array_list data;
-    // get the process id for this row of processes.
-    int process_id = map_process_coord_to_pid(k, column, info->sqrt_p);
-    if (k == info->p_column) {
+    // get the senders' process id for this row of processes.
+    int process_id = map_process_coord_to_pid(k, p_senders_column, info->sqrt_p);
+    if (p_senders_column == info->p_column) {
       data = build_column_elements_to_send(info, column, graph);
 #ifdef PRINT_DEBUG
       {
         char buffer[4096] = {0};
-        printf("Process: %d. Build column data to send:\n", info->id);
+        printf("Column %d; Process: %d. Build column data to send:\n", column, info->id);
         array_list_print_int(&data, buffer);
         printf("%s\n", buffer);
       }
@@ -367,11 +376,11 @@ int broadcast_column(matrix2d *graph, int column, proc_info const *info, MPI_Com
       // set the size now
       data.size = data.capacity;
     }
-    rc = MPI_Bcast(data.data, data.size, MPI_INT, k, communicator);
+    rc = MPI_Bcast(data.data, data.size, MPI_INT, info->p_row, communicator);
     if (rc != MPI_SUCCESS) {
       printf("Warning! MPI column %d Broadcast failed.\n", column);
     }
-    if (k != info->p_column) {
+    if (column % info->sqrt_p != info->p_column) {
       rc = insert_column_in_graph(&data, process_id, column, info, graph);
       if (rc != CODE_SUCCESS) {
         printf("T___T\n");
@@ -379,5 +388,5 @@ int broadcast_column(matrix2d *graph, int column, proc_info const *info, MPI_Com
     }
     array_list_free(&data);
   }
-  return CODE_SUCCESS;
+  return rc;
 }

@@ -194,10 +194,9 @@ int main(int argc, char *argv[]) {
       }
     }
 #ifdef PRINT_DEBUG
-    printf("nodes in input: %zu\n", graph.rows);
     {
       char buff[4096] = {0};
-      printf("Input graph is: \n");
+      printf("Output graph is: \n");
       matrix2d_print_int(&graph, buff);
       printf("%s", buff);
     }

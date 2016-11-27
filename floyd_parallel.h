@@ -97,14 +97,14 @@ int insert_column_in_graph(array_list const *items, int senders_pid, int column,
 
 /**
  * Broadcasts the elements of the given row from the current processor
- * and receives the data from other processors to populate the complete row
+ * and receives the data from other processors to populate the complete columns
  * of this process
  */ 
-int broadcast_rows(matrix2d *graph, int row, proc_info const *info, MPI_Comm communicator);
+int broadcast_row(matrix2d *graph, int row, proc_info const *info, MPI_Comm communicator);
 
 /**
  * Broadcasts the elements of the given column from the current processor
- * and receives the data from other processors to populate the complete column
+ * and receives the data from other processors to populate the complete rows
  * of this process
  */ 
 int broadcast_column(matrix2d *graph, int column, proc_info const *info, MPI_Comm communicator);
