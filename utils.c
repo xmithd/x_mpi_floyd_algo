@@ -159,6 +159,12 @@ int array_list_union(array_list const *lhs, array_list const* rhs, array_list *o
  */ 
 char* array_list_get_at(array_list const * const list, size_t index)
 {
+#ifdef PRINT_DEBUG
+  if (index >= list->size) {
+    printf("Index out of bounds!\n");
+    return NULL;
+  }
+#endif
   return &(list->data[index * list->element_size]);
 }
 
@@ -309,6 +315,12 @@ int matrix2d_free(matrix2d *matrix)
 char* matrix2d_get_at(matrix2d const *matrix, size_t row, size_t column)
 {
   // no checks to get better performance.
+#ifdef PRINT_DEBUG
+  if (row >= matrix->rows || column >= matrix->columns) {
+    printf("Invalid row and/or column given!\n");
+    return NULL;
+  }
+#endif
   return array_list_get_at(&matrix->list, column + matrix->columns*row);
 }
 
@@ -318,6 +330,12 @@ char* matrix2d_get_at(matrix2d const *matrix, size_t row, size_t column)
 int matrix2d_set_at(matrix2d *matrix, size_t row, size_t column, const char * value)
 {
   char *data = array_list_get_at(&(matrix->list), column + matrix->columns*row);
+#ifdef PRINT_DEBUG
+  if (row >= matrix->rows || column >= matrix->columns) {
+    printf("Invalid row or column given!\n");
+    return CODE_ERROR;
+  }
+#endif
   if (!data)
     return CODE_ERROR;
   memcpy(data, value, matrix->list.element_size);
