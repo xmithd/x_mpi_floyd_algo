@@ -5,6 +5,8 @@
 #include <limits.h>
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
+#include <stdlib.h>
 
 /**
  * Main parallel Floyd algorithm with the broadcast
@@ -638,6 +640,9 @@ int main_floyd_parallel(int argc, char *argv[], int pipeline)
   }
   info.sqrt_p = sqrt_p;
 
+  // init random seed
+  srand(time(NULL));
+
   // generate graph if master and argv has a number argument (number of nodes)
   if (info.id == 0) {
     if (argc > 1) {
@@ -754,9 +759,9 @@ int main_floyd_parallel(int argc, char *argv[], int pipeline)
     goto end;
   }
 
-  // TODO put some kind of barrier here?
 
   if (info.id == 0) {
+    // end timer - no barrier needed
     end = MPI_Wtime();
     // prepare to receive data from processes.
     array_list_init(&gathered_list, info.nodes * info.nodes, sizeof(int));

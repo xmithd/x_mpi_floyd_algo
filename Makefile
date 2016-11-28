@@ -2,7 +2,7 @@ OBJS_SERIAL = floyd_serial.o main_serial.o utils.o file_ops.o
 OBJS_PARALLEL_BCAST = utils.o floyd_parallel.o main_parallel_bcast.o file_ops.o
 OBJS_PARALLEL_PIPELINE = utils.o floyd_parallel.o main_parallel_pipeline.o file_ops.o
 CC = mpicc
-DEBUG = -DPRINT_DEBUG -g
+DEBUG = #-DPRINT_DEBUG -g
 CFLAGS = -Wall -c $(DEBUG)
 LFLAGS = -Wall $(DEBUG)
 
