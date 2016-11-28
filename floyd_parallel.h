@@ -109,4 +109,29 @@ int broadcast_row(matrix2d *graph, int row, proc_info const *info, MPI_Comm comm
  */ 
 int broadcast_column(matrix2d *graph, int column, proc_info const *info, MPI_Comm communicator);
 
+/**
+ * Either:
+ * -Receives the row needed from adjacent processor and propagate to the next processor
+ * if not at boundary.
+ * OR if current process owns the row:
+ * -Extracts the row to send and sends it to adjacent nodes.
+ */
+int propagate_row(matrix2d *graph, int row, proc_info const *info, MPI_Comm communicator);
+
+/**
+ * Rowwise pipelining: 
+ * Either:
+ * -Receives the column needed from adjacent processor and propagate to the next processor
+ * if not at boundary.
+ * OR if current process owns the column
+ * -Extracts the column to send and sends it to adjacent nodes.
+ */
+int propagate_column(matrix2d *graph, int column, proc_info const *info, MPI_Comm communicator);
+
+/**
+ * Entry point.
+ * Set pipeline to 0 (false) if use broadcast instead of pipeline
+ */ 
+int main_floyd_parallel(int argc, char *argv[], int pipeline);
+
 #endif // FLOYD_PARALLEL_H
