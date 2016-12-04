@@ -128,6 +128,8 @@ int propagate_row(matrix2d *graph, int row, proc_info const *info, MPI_Comm comm
  */
 int propagate_column(matrix2d *graph, int column, proc_info const *info, MPI_Comm communicator);
 
+// MAIN PROGRAM
+
 /**
  * Entry point.
  * Set pipeline to 0 (false) if use broadcast instead of pipeline

@@ -612,6 +612,10 @@ int propagate_column(matrix2d *graph, int column, proc_info const *info, MPI_Com
   return rc;
 }
 
+/**
+ * Entry point.
+ * Set pipeline to 0 (false) if use broadcast instead of pipeline
+ */ 
 int main_floyd_parallel(int argc, char *argv[], int pipeline)
 {
   int rc; // return code
