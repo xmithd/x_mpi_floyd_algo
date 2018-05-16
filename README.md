@@ -2,7 +2,7 @@
 
 This program measures the time it takes to find the distances between all pair of vertices in a weighted edge graph.
 
-##Build
+## Build
 A Makefile is provided to ease building the programs. To build the applications,
 the `mpicc` compiler is required. Use `make` to build.
 * The serial version is called floyd_serial
@@ -26,13 +26,13 @@ When no argument is given, the program will attempt to read `input.txt`.
 The programs will output the time it took to computed the shortest distance between all pairs of vertices. This does not include
 the time it takes to generate/read the input file nor the time to scatter and gather the data among the processes.
 
-#Verification
+# Verification
 The serial and parallel versions output the same file given the same input.
 You can view the distance matrix by enabling the PRINT_DEBUG flag when compiling the objects.  
 Note: Only enable the flag for small inputs or else a buffer will occur and likely crash the program.
 It will print the input distance matrix and the output distance matrix with the shortest paths.
 
-#Limitations
+# Limitations
 The number of processes must be equally divisible by the square of the number of vertices so that each process has an equal portion of the distance matrix.
 
 # Improvements
